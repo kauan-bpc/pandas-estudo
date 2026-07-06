@@ -50,4 +50,31 @@ df_copia['Loja'] = df_copia['Loja'].str.title()
 
 # Dropa os pedidos com ID duplicado
 df_copia = df_copia.drop_duplicates(subset=['ID_Pedido'])
+
+Agora a parte de criar novas colunas, as operações são bem simples e intuitivas,nesse caso será mostrado três formas diferentes para se criar uma coluna nova:
+
+```python
+# Coluna de Faturamento
+df_tratadov['Faturamento'] = df_tratadov['Qtd'] * df_tratadov['Preco_Unitario']
+
+# forma de venda (o np.where() é uma função do numpy que permite criar uma nova coluna com base em uma condição. A sintaxe é: np.where(condição, valor_se_verdadeiro, valor_se_falso))
+df_tratadov['Forma_Venda'] = np.where(df_tratadov['Loja'] == 'Online', 'Online', 'Presencial')
+
+# regiao 
+display(df_tratadov['Loja'].unique())
+
+dict_regioes = {
+    'São Paulo': 'Sudeste',
+    'Belo Horizonte': 'Sudeste',
+    'Online': 'Online',
+    'Rio De Janeiro': 'Sudeste',
+    'Salvador': 'Nordeste',
+    'Recife': 'Nordeste',
+    'Curitiba': 'Sul',
+    'Porto Alegre': 'Sul'
+}
+df_tratadov['Regiao'] = df_tratadov['Loja'].map(dict_regioes)
+```
+
+Falando um pouco do que foi feito nessa parte da criação de novas colunas, a primeira forma a mais simples apenas colocando o nome da nova coluna e a operação necessária para criar ela, a segunda forma foi utilizado o np.where que é uma função do numpy com sintaxe parecida de um if else comum (condição, valor se verdadeiro, valor se falso), e tem a terceira forma que é um pouquinho mais complexa mas de certa forma continua simples, nesse terceiro caso foi criado um dict com as cidades presentes no banco e atribuindo sua respectiva região para depois chamar esse dict numa função .map que permite criar uma nova coluna com base num dict ou em alguns casos até mesmo utilizando outra função, foi feito dessa forma mais eficiente para não ter que ficar utilizando np.where em cima de np.where para cada cidade
 ```
