@@ -1,4 +1,4 @@
-```bash pip install pandas numpy openpyxl ```
+``` pip install pandas numpy openpyxl ```
 
 # Primeiros passos
 
