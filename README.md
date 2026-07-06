@@ -1,4 +1,4 @@
-pip install pandas numpy openpyxl
+pip install pandas numpy openpyxl ``bash
 
 # Primeiros passos
 
