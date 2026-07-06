@@ -50,6 +50,7 @@ df_copia['Loja'] = df_copia['Loja'].str.title()
 
 # Dropa os pedidos com ID duplicado
 df_copia = df_copia.drop_duplicates(subset=['ID_Pedido'])
+```
 
 Agora a parte de criar novas colunas, as operações são bem simples e intuitivas,nesse caso será mostrado três formas diferentes para se criar uma coluna nova:
 
