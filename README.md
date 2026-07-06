@@ -1,3 +1,5 @@
+pip install pandas numpy openpyxl
+
 # Primeiros passos
 
 ## 1. Importando as bibliotecas
