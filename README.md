@@ -78,4 +78,107 @@ df_tratadov['Regiao'] = df_tratadov['Loja'].map(dict_regioes)
 ```
 
 Falando um pouco do que foi feito nessa parte da criação de novas colunas, a primeira forma a mais simples apenas colocando o nome da nova coluna e a operação necessária para criar ela, a segunda forma foi utilizado o np.where que é uma função do numpy com sintaxe parecida de um if else comum (condição, valor se verdadeiro, valor se falso), e tem a terceira forma que é um pouquinho mais complexa mas de certa forma continua simples, nesse terceiro caso foi criado um dict com as cidades presentes no banco e atribuindo sua respectiva região para depois chamar esse dict numa função .map que permite criar uma nova coluna com base num dict ou em alguns casos até mesmo utilizando outra função, foi feito dessa forma mais eficiente para não ter que ficar utilizando np.where em cima de np.where para cada cidade
+
+Agora chegou a parte de analisar, organizar e filtrar os dados. Primeiramente é muito importante organizar e ordenar os dados de forma cronológica antes de filtrar ou buscar informações específicas, além de também resetar o index para que os números das linhas reflitam a nova ordem:
+
+```python
+# Ordena o dataframe pela coluna Data
+df_tratadov = df_tratadov.sort_values(by='Data')
+
+# Reseta o index sem criar uma nova coluna com o antigo
+df_tratadov = df_tratadov.reset_index(drop=True)
+```
+
+Agora com os dados em ordem, você pode usar algumas formas de acessar e filtrar esses dados, o `.loc` (acesso por nome da coluna e rótulo da linha) e o `.iloc` (acesso por posição numérica):
+
+```python
+# .loc: acessa por nome da coluna e rótulo da linha
+loja = df_tratadov.loc[3, 'Loja']
+
+# .iloc: acessa por posição numérica
+produto = df_tratadov.iloc[3, 3]
+```
+
+Outra forma de filtrar é utilizando condições booleanas, seja para buscar um registro específico ou para exportar pedaços da base:
+
+```python
+# Condicional simples - filtra linhas onde ID_Pedido == 4
+df_id_pedido = df_tratadov[df_tratadov['ID_Pedido'] == 4]
+
+# Exportar pedaços da base para CSV
+df_vendas_sp = df_tratadov[df_tratadov['Loja'] == 'São Paulo']
+df_vendas_sp.to_csv('vendas_sp.csv', index=False)
+
+# Filtrar por data (vendas de 2024)
+df_vendas_2024 = df_tratadov[df_tratadov['Data'].dt.year == 2024]
+
+# Duplas condições usando & (e)
+df_vendas_HDMI_SUL = df_tratadov[(df_tratadov['Produto'] == 'Cabo HDMI') & (df_tratadov['Regiao'] == 'Sul')]
+```
+
+Depois de ter uma base limpa, organizada e saber como filtrar os dados, partimos para análises mais aprofundadas utilizando agrupamentos. O `groupby` permite agrupar dados por categorias e aplicar funções de agregação como soma, média, etc:
+
+```python
+# Agrupa por Loja e soma o Faturamento
+analise_lojas = df_tratadov[['Loja', 'Faturamento']].groupby('Loja').sum()
+
+# Ordena do maior para o menor faturamento
+analise_lojas = analise_lojas.sort_values(by='Faturamento', ascending=False)
+analise_lojas = analise_lojas.reset_index()
+
+# Formata a coluna Faturamento para moeda brasileira
+analise_lojas['Faturamento'] = analise_lojas['Faturamento'].map('R${:,.2f}'.format)
+```
+
+Você também pode criar rankings específicos, como por exemplo quais produtos venderam mais no canal Online:
+
+```python
+# Filtra apenas as vendas Online
+df_vendas_online = df_tratadov[df_tratadov['Loja'] == 'Online']
+
+# Agrupa por Produto e soma a quantidade vendida
+analise_produtos_online = df_vendas_online[['Produto', 'Qtd']].groupby('Produto').sum()
+analise_produtos_online = analise_produtos_online.sort_values(by='Qtd', ascending=False)
+
+# Renomeia a coluna para apresentação
+analise_produtos_online = analise_produtos_online.rename(columns={'Qtd': 'Vendas totais'})
+```
+
+E até mesmo criar agrupamentos com múltiplos níveis para análises mais complexas, como ver os produtos mais vendidos em cada loja:
+
+```python
+# Agrupa por Loja E Produto simultaneamente
+analise_produtos_em_lojas = df_tratadov[['Loja', 'Produto', 'Qtd']].groupby(['Loja', 'Produto']).sum()
+```
+
+Agora partindo para um outro tipo de análise, a de gerentes. Nessa etapa nós temos duas tabelas diferentes: a tabela principal de vendas e a tabela de gerentes com suas metas. Precisamos juntar essas tabelas para poder comparar o faturamento de cada loja com a meta do respectivo gerente:
+
+```python
+# Filtra apenas os dados de janeiro de 2023
+df_meta = df_tratadov[(df_tratadov['Data'].dt.year == 2023) & (df_tratadov['Data'].dt.month == 1)]
+
+# Agrupa por Loja e soma o Faturamento
+df_meta = df_meta[['Loja','Faturamento']].groupby('Loja', as_index=False).sum()
+
+# Dá um merge (junção) com a tabela de gerentes usando a coluna Loja como chave
+df_meta = df_meta.merge(df_gerentes, on='Loja', how='left')
+
+# Cria uma coluna dizendo se a loja bateu a meta ou não
+df_meta['Bateu Meta'] = np.where(df_meta['Faturamento'] >= df_meta['Meta_Mensal'], 'Sim', 'Não')
+```
+
+Por último, uma análise temporal muito útil é ver a evolução do faturamento ao longo dos meses. Para isso, podemos criar uma coluna de Mês-Ano e agrupar por ela:
+
+```python
+# Cria uma coluna com o período (mês-ano)
+df_tratadov['Mes-Ano'] = df_tratadov['Data'].dt.to_period('M')
+
+# Agrupa por Mes-Ano e soma o Faturamento
+df_vendas_mes = df_tratadov[['Mes-Ano', 'Faturamento']].groupby('Mes-Ano').sum()
+
+# Plota o gráfico da evolução mensal
+df_vendas_mes.plot()
+```
+
+E dessa forma você consegue visualizar graficamente a tendência de faturamento mês a mês, identificando sazonalidades e períodos de alta ou baixa nas vendas.
 ```
